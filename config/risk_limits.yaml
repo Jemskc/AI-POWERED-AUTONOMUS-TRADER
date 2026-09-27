@@ -1,0 +1,8 @@
+# Hard limits enforced by trader/risk.py. The strategy code never writes this file.
+max_position_frac: 0.10        # no single symbol above 10% of equity
+max_gross_leverage: 1.6        # sum |positions| / equity
+max_net_exposure_frac: 0.5     # |sum positions| / equity
+max_order_notional_frac: 0.15  # fat-finger guard per order
+daily_loss_frac: 0.03          # equity down 3% vs previous close -> flatten + halt
+max_drawdown_frac: 0.15        # equity down 15% from peak -> flatten + halt
+max_data_age_sessions: 1       # latest bar must be the previous trading session

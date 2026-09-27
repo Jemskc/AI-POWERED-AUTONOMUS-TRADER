@@ -1,0 +1,21 @@
+.legend-row { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 6px; font: 11px var(--mono); color: var(--muted); }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+.dot.up { background: var(--up); } .dot.down { background: var(--down); }
+.accbig { display: flex; align-items: baseline; gap: 10px; margin: 4px 0 10px; }
+.accbig b { font: 600 30px var(--mono); }
+.acc-note { font-size: 11.5px; color: var(--muted); line-height: 1.5; margin-top: 10px; }
+.cal { display: grid; grid-template-columns: 90px 1fr 56px; gap: 6px; align-items: center; font: 11px var(--mono); margin: 3px 0; }
+.cal .bars { position: relative; height: 12px; background: var(--panel2); border-radius: 3px; }
+.cal .bars i { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 3px; }
+.cal .bars i.pred { background: color-mix(in srgb, var(--accent) 45%, transparent); }
+.cal .bars i.act { height: 4px; top: 4px; background: var(--text); }
+.sig { display: grid; grid-template-columns: 48px 1fr 52px; gap: 8px; align-items: center; font: 11.5px var(--mono); margin: 3px 0; }
+.sig .bar { height: 8px; position: relative; background: var(--panel2); border-radius: 4px; }
+.sig .bar::after { content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; border-left: 1px solid var(--muted); }
+.sig .bar i { position: absolute; top: 0; bottom: 0; border-radius: 4px; }
+.sig .thr { position: absolute; top: -2px; bottom: -2px; border-left: 1px dashed var(--warn); opacity: .7; }
+.hours-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.poschip { font: 700 10px var(--mono); padding: 1px 5px; border-radius: 4px; }
+.poschip.L { color: var(--up); background: color-mix(in srgb, var(--up) 14%, transparent); }
+.poschip.S { color: var(--down); background: color-mix(in srgb, var(--down) 14%, transparent); }
+@media (max-width: 1200px) { .hours-grid { grid-template-columns: 1fr; } }

@@ -1,0 +1,11 @@
+.env
+.venv/
+.venv-gpu/
+data/
+logs/
+state/
+models/
+__pycache__/
+*.pyc
+KILL
+KILL_CRYPTO

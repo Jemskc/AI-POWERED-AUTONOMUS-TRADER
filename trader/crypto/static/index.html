@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Crypto Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/cstatic/crypto.css">
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="logo">◆</span> AI·TRADER <span class="sub">crypto 24/7</span></div>
+  <div class="pill paper">PAPER · VIRTUAL $</div>
+  <div class="pill" id="live-pill">engine —</div>
+  <div class="clock" id="clock">--:--:-- UTC</div>
+  <div class="pill" id="next-pill">next decision —</div>
+  <div class="spacer"></div>
+  <div class="seg" id="book-seg" title="Which virtual book"></div>
+  <button class="btn" id="resume-btn" hidden>Resume</button>
+  <button class="btn danger" id="kill-btn">■ KILL</button>
+</header>
+
+<div class="banner" id="banner" hidden></div>
+
+<section class="kpis">
+  <div class="kpi"><label>Equity</label><b id="k-eq">—</b><small id="k-start">—</small></div>
+  <div class="kpi"><label>P&amp;L since start</label><b id="k-pnl">—</b><small id="k-ret">—</small></div>
+  <div class="kpi"><label>vs buy &amp; hold</label><b id="k-alpha">—</b><small id="k-bh">—</small></div>
+  <div class="kpi"><label>BTC since start</label><b id="k-btc">—</b><small id="k-hours">—</small></div>
+  <div class="kpi"><label>Exposure</label><b id="k-gross">—</b><small id="k-net">—</small></div>
+  <div class="kpi"><label>Trades · fees</label><b id="k-trades">—</b><small id="k-fees">—</small></div>
+  <div class="kpi"><label>Live accuracy</label><b id="k-acc">—</b><small id="k-accn">—</small></div>
+  <div class="kpi"><label>Drawdown</label><b id="k-dd">—</b><small id="k-status">—</small></div>
+</section>
+
+<main class="grid">
+  <section class="panel span8">
+    <div class="ph"><h2>Equity: both books vs buy &amp; hold (all 20 coins)</h2><span class="muted" id="eq-legend"></span></div>
+    <div class="chart" id="eq-chart"></div>
+    <div class="empty" id="eq-empty" hidden>Equity points appear every minute once the engine is running.</div>
+  </section>
+
+  <section class="panel span4">
+    <div class="ph"><h2>Live prediction accuracy</h2><span class="tag ok" id="acc-tag">—</span></div>
+    <div id="acc-body"><div class="empty">Scoring starts 5h after launch (4h horizon + 1h).</div></div>
+  </section>
+
+  <section class="panel span8">
+    <div class="ph"><h2 id="px-title">BTC</h2><span class="muted" id="px-quote"></span>
+      <div class="seg small" id="px-seg"><button data-i="15m">15m</button><button class="on" data-i="1h">1h</button><button data-i="1d">1d</button></div>
+    </div>
+    <div class="chart tall" id="px-chart"></div>
+    <div class="legend-row"><span><i class="dot up"></i>model said UP (hollow = not scored yet)</span><span><i class="dot down"></i>model said DOWN</span><span>✓/✗ = right/wrong after 4h</span></div>
+  </section>
+
+  <section class="panel span4">
+    <div class="ph"><h2>Market · model view</h2><span class="muted">live</span></div>
+    <div class="scroll tallscroll"><table class="tbl" id="watch"><thead><tr><th>Coin</th><th class="r">Last</th><th class="r">24h</th><th class="r">P(up 4h)</th><th class="r">Pos</th></tr></thead><tbody></tbody></table></div>
+  </section>
+
+  <section class="panel span8">
+    <div class="ph"><h2>Open positions · <span id="pos-book"></span></h2><span class="muted" id="pos-sum"></span></div>
+    <div class="scroll"><table class="tbl" id="pos"><thead><tr><th>Coin</th><th>Side</th><th class="r">Value</th><th class="r">Weight</th><th class="r">Entry</th><th class="r">Last</th><th class="r">Unrl P&amp;L</th><th class="r">%</th><th class="r">24h</th></tr></thead><tbody></tbody></table>
+    <div class="empty" id="pos-empty" hidden>Flat: no confident signals yet for this book.</div></div>
+  </section>
+
+  <section class="panel span4">
+    <div class="ph"><h2>Latest model signals</h2><span class="muted" id="sig-t"></span></div>
+    <div id="signals"></div>
+  </section>
+
+  <section class="panel span12">
+    <div class="tabs" id="tabs">
+      <button class="on" data-tab="trades">Trades</button><button data-tab="preds">Predictions log</button>
+      <button data-tab="hours">Accuracy by hour</button><button data-tab="log">Engine log</button><button data-tab="research">Backtest research</button>
+    </div>
+    <div class="tab" data-tab="trades"><div class="scroll tallscroll"><table class="tbl" id="trades"><thead><tr><th>Time (UTC)</th><th>Coin</th><th>Side</th><th class="r">Qty</th><th class="r">Price</th><th class="r">Notional</th><th class="r">Fee</th><th class="r">Realized</th><th class="r">P(up)</th><th>Reason</th></tr></thead><tbody></tbody></table><div class="empty" id="trades-empty" hidden>No trades yet.</div></div></div>
+    <div class="tab" data-tab="preds" hidden><div class="scroll tallscroll"><table class="tbl" id="preds"><thead><tr><th>Candle (UTC)</th><th>Coin</th><th class="r">XGB</th><th class="r">LGBM</th><th class="r">Ensemble</th><th>Call</th><th class="r">4h return</th><th>Result</th></tr></thead><tbody></tbody></table></div></div>
+    <div class="tab" data-tab="hours" hidden><div class="hours-grid"><div class="chart" id="acc-chart"></div><div class="scroll tallscroll"><table class="tbl" id="hours"><thead><tr><th>Candle</th><th class="r">Coins</th><th class="r">Up-rate</th><th class="r">Accuracy</th><th class="r">Avg 4h ret</th></tr></thead><tbody></tbody></table></div></div></div>
+    <div class="tab" data-tab="log" hidden><pre class="console" id="log"></pre></div>
+    <div class="tab" data-tab="research" hidden><div class="md" id="research"></div></div>
+  </section>
+</main>
+<div class="toast" id="toast" hidden></div>
+<script src="/cstatic/app.js"></script>
+</body>
+</html>

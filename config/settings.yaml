@@ -1,0 +1,62 @@
+# shadow = compute everything on live data and LOG the orders only
+# paper  = send the orders to the Alpaca PAPER account (virtual money, real market prices)
+# (there is deliberately no real-money mode; trading_client() is hard-wired to paper=True)
+mode: shadow
+
+data_dir: data
+history_start: "2016-01-01"
+feed: sip            # sip = consolidated tape of all US exchanges (free for data older than 15 min); fallback: iex
+
+# fraction of account equity given to each sleeve
+sleeves:
+  stock_ml: 0.6
+  etf_trend: 0.4
+
+stock_ml:
+  universe_size: 500          # top N US stocks by 60-day median dollar volume, recomputed every day
+  min_price: 5.0
+  horizon: 5                  # predict next-5-day open-to-open return (cross-sectional rank)
+  long_short_frac: 0.1        # long the top 10%, short the bottom 10%
+  gross_leverage: 1.0         # of the sleeve's capital, dollar-neutral
+  pred_smoothing_halflife: 3  # EWMA on predictions to cut turnover
+  train_years: 5
+  retrain_every_days: 21
+  lgbm:
+    objective: regression
+    learning_rate: 0.03
+    num_leaves: 31
+    min_data_in_leaf: 1000
+    feature_fraction: 0.8
+    bagging_fraction: 0.8
+    bagging_freq: 1
+    lambda_l2: 10.0
+    num_threads: 16
+    verbose: -1
+  num_boost_round: 300
+
+etf_trend:
+  # cross-asset trend following: equities, bonds, credit, inflation, metals, energy, ags, dollar, REITs, sectors
+  symbols: [SPY, QQQ, IWM, EFA, EEM, TLT, IEF, LQD, HYG, TIP, GLD, SLV, USO, DBC, DBA, UUP, VNQ,
+            XLE, XLK, XLF, XLV, XLU]
+  lookbacks: [21, 63, 126, 252]
+  vol_target: 0.10            # annualized vol target for the sleeve
+  max_asset_weight: 0.25      # of sleeve capital
+  max_gross: 2.0
+
+costs:
+  cost_bps: 5.0               # one-way spread + slippage estimate (Alpaca has no commission on stocks)
+  borrow_bps_annual: 50.0     # stock-borrow fee on the short side
+
+execution:
+  min_trade_frac: 0.001       # skip trades smaller than 0.1% of equity
+
+# the dashboard server runs the jobs itself while it is up (no cron needed)
+scheduler:
+  enabled: true
+  run_time_et: "08:45"        # daily run on trading days (market-on-open orders)
+  retrain_weekday: 5          # Saturday: retrain with fresh history if the model is > 25 days old
+  retrain_time_et: "10:00"
+
+dashboard:
+  host: 127.0.0.1
+  port: 8765

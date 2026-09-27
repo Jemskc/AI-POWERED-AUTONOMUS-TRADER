@@ -1,0 +1,17 @@
+# Live crypto forward test: real Binance prices (keyless), virtual money, our own paper broker.
+start_capital: 100000
+H: 4                  # model predicts P(up over the next 4 hours)
+tranches: 4           # 4 staggered books; one rebalances every hour and holds for 4h
+fee_bps: 5.0          # taker fee per side (Binance futures level)
+slippage_bps: 1.0     # on top of paying the live bid/ask spread
+allow_short: true     # simulated perpetual futures (funding not modelled)
+max_daily_loss: 0.05  # -5% vs start of UTC day -> flatten + halt
+max_drawdown: 0.20    # -20% from peak -> flatten + halt
+mark_every_s: 15
+
+# independent virtual books, each with its own $100k, all fed by the same live predictions
+books:
+  confident: {threshold: 0.04}   # the rule tested in the walk-forward backtest
+  active:    {threshold: 0.02}   # lower bar: trades more often (backtest: fees hurt more)
+  # long-only rotation: hold the model's top picks, sell coins it turns bearish on, move money to new picks
+  rotation:  {type: rotation, K: 5, keep: 8, enter_p: 0.52, exit_p: 0.48, every_h: 4}

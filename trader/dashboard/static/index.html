@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Trader Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="logo">◆</span> AI·TRADER <span class="sub">terminal</span></div>
+  <div class="pill" id="mode-pill">—</div>
+  <div class="pill" id="market-pill">market —</div>
+  <div class="clock" id="clock">--:--:-- ET</div>
+  <div class="spacer"></div>
+  <div class="seg" id="book-seg" title="Which book to display">
+    <button data-book="paper">PAPER</button><button data-book="shadow">SHADOW</button>
+  </div>
+  <div class="menu">
+    <button class="btn" id="jobs-btn">Run ▾</button>
+    <div class="menu-list" id="jobs-list">
+      <button data-job="run">Daily run (configured mode)</button>
+      <button data-job="run_shadow">Daily run: shadow</button>
+      <button data-job="run_paper" data-confirm="Send orders to the PAPER account now?">Daily run: paper</button>
+      <hr>
+      <button data-job="train">Retrain model (refresh data)</button>
+      <button data-job="research">Run research backtest</button>
+      <button data-job="download">Download full history</button>
+    </div>
+  </div>
+  <button class="btn danger" id="kill-btn">■ KILL</button>
+</header>
+
+<div class="banner" id="banner" hidden></div>
+
+<section class="kpis">
+  <div class="kpi"><label>Equity</label><b id="k-equity">—</b><small id="k-acct">—</small></div>
+  <div class="kpi"><label>Day P&amp;L</label><b id="k-day">—</b><small id="k-daypct">—</small></div>
+  <div class="kpi"><label>Book unrealized</label><b id="k-upl">—</b><small id="k-upltoday">—</small></div>
+  <div class="kpi"><label>Gross leverage</label><b id="k-gross">—</b><small id="k-ls">—</small></div>
+  <div class="kpi"><label>Net exposure</label><b id="k-net">—</b><small>long − short</small></div>
+  <div class="kpi"><label>Drawdown</label><b id="k-dd">—</b><small id="k-peak">—</small></div>
+  <div class="kpi"><label>Positions</label><b id="k-npos">—</b><small id="k-nls">—</small></div>
+  <div class="kpi"><label>Buying power</label><b id="k-bp">—</b><small id="k-cash">—</small></div>
+</section>
+
+<main class="grid">
+  <section class="panel span8">
+    <div class="ph"><h2>Equity curve</h2>
+      <div class="seg small" id="eq-seg"><button>1D</button><button>1W</button><button class="on">1M</button><button>3M</button><button>1A</button></div>
+    </div>
+    <div class="chart" id="eq-chart"></div>
+    <div class="empty" id="eq-empty" hidden>No account history yet: it fills in once paper trades start.</div>
+  </section>
+
+  <section class="panel span4">
+    <div class="ph"><h2>Risk</h2><span class="tag" id="risk-state">—</span></div>
+    <div id="risk-bars"></div>
+    <div class="risk-actions">
+      <button class="btn" id="resume-btn" hidden>Resume trading</button>
+    </div>
+    <dl class="kv" id="sys-kv"></dl>
+  </section>
+
+  <section class="panel span8">
+    <div class="ph"><h2 id="px-title">SPY</h2><span class="muted" id="px-quote"></span>
+      <div class="seg small" id="px-seg"><button class="on">1D</button><button>5Min</button></div>
+    </div>
+    <div class="chart tall" id="px-chart"></div>
+  </section>
+
+  <section class="panel span4">
+    <div class="ph"><h2>Cross-asset watchlist</h2><span class="muted">live · IEX</span></div>
+    <div class="scroll"><table class="tbl" id="watch"><thead><tr><th>Symbol</th><th class="r">Last</th><th class="r">Chg</th><th class="r">Trend wt</th></tr></thead><tbody></tbody></table></div>
+  </section>
+
+  <section class="panel span8">
+    <div class="ph"><h2>Positions</h2>
+      <div class="seg small" id="pos-filter"><button class="on" data-f="all">All</button><button data-f="LONG">Long</button><button data-f="SHORT">Short</button><button data-f="ml">ML</button><button data-f="trend">Trend</button></div>
+      <input id="pos-search" placeholder="filter symbol">
+    </div>
+    <div class="scroll tallscroll"><table class="tbl" id="pos"><thead><tr>
+      <th data-k="symbol">Symbol</th><th data-k="sleeve">Sleeve</th><th data-k="qty" class="r">Qty</th>
+      <th data-k="avg" class="r">Avg</th><th data-k="last" class="r">Last</th><th data-k="value" class="r">Value</th>
+      <th data-k="weight" class="r">Wt</th><th data-k="upl" class="r">Unrl P&amp;L</th><th data-k="uplpc" class="r">%</th>
+      <th data-k="today" class="r">Today</th></tr></thead><tbody></tbody></table>
+      <div class="empty" id="pos-empty" hidden>No positions in this book.</div>
+    </div>
+  </section>
+
+  <section class="panel span4">
+    <div class="ph"><h2>Sleeves</h2></div>
+    <div id="sleeves"></div>
+    <div class="ph mt"><h2>Latest targets</h2><span class="muted" id="tgt-count"></span></div>
+    <div id="targets"></div>
+  </section>
+
+  <section class="panel span12">
+    <div class="tabs" id="tabs">
+      <button class="on" data-tab="orders">Orders &amp; fills</button><button data-tab="research">Research</button>
+      <button data-tab="runs">Run history</button><button data-tab="console">Job console <span id="job-dot"></span></button>
+    </div>
+    <div class="tab" data-tab="orders">
+      <div class="scroll tallscroll"><table class="tbl" id="orders"><thead><tr><th>Time</th><th>Symbol</th><th>Side</th><th class="r">Qty</th><th class="r">Filled</th><th class="r">Price</th><th class="r">Notional</th><th>Type</th><th>Status</th></tr></thead><tbody></tbody></table>
+      <div class="empty" id="orders-empty" hidden>No orders yet.</div></div>
+    </div>
+    <div class="tab" data-tab="research" hidden>
+      <div class="research">
+        <div class="chart" id="rs-chart"></div>
+        <div class="md" id="rs-report"><p class="muted">No research report yet. Use Run ▸ Run research backtest.</p></div>
+      </div>
+    </div>
+    <div class="tab" data-tab="runs" hidden>
+      <div class="scroll tallscroll"><table class="tbl" id="runs"><thead><tr><th>Date</th><th>Mode</th><th class="r">Equity</th><th class="r">Gross</th><th class="r">Net</th><th class="r">Targets</th><th class="r">Orders</th><th class="r">Order $</th><th>Data through</th><th>Model</th></tr></thead><tbody></tbody></table></div>
+    </div>
+    <div class="tab" data-tab="console" hidden>
+      <div class="console-head"><span id="job-name">no job run yet</span></div>
+      <pre class="console" id="console"></pre>
+    </div>
+  </section>
+</main>
+<div class="toast" id="toast" hidden></div>
+<script src="/static/app.js"></script>
+</body>
+</html>
